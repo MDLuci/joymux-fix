@@ -183,8 +183,8 @@ def parse_current_amux_cells(block):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in_dtb", required=True, help="Path to input .dtb")
-    ap.add_argument("--node_path", default="/odroidgo3-joypad",
-                    help="Device tree node path (default: /odroidgo3-joypad)")
+    ap.add_argument("--node_path", default="/play_joystick",
+                    help="Device tree node path (default: /play_joystick)")
 
     # AMUX：用户按 [LX,LY,RX,RY] 输入“当前感觉顺序”，或 'unchanged'
     ap.add_argument("--amux_csv", required=True,
