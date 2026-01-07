@@ -4,19 +4,23 @@ on:
   workflow_dispatch:
     inputs:
       dtb_path:
-        description: "Path to DTB in repo (e.g. dtbs/og3/odroidgo3.dtb)"
+        description: "Nombre del archivo DTB (ej: rf3536k3ka.dtb)"
         required: true
-        default: "rk3326-xf36pro-linux.dtb"
+        default: "rf3536k3ka.dtb"
+      node_path:
+        description: "Nombre del nodo (PARA TU K36 USA: play_joystick)"
+        required: true
+        default: "play_joystick"
       amux_map:
-        description: "Permutation: LX,LY,RY,RX | Absolute: abs:RX,RY,LY,LX | or 'unchanged'"
+        description: "Permutacion: LX,RX,LY,RY"
         required: true
-        default: "unchanged"
+        default: "LX,RX,LY,RY"
       invert_axes:
-        description: "Use 'unchanged' OR CSV with lx,ly,rx,ry (e.g. lx,rx)"
+        description: "Inversion: unchanged"
         required: false
         default: "unchanged"
       tuning:
-        description: "One number for all (e.g. 200) OR 8 CSV: x+,x-,y+,y-,rx+,rx-,ry+,ry-"
+        description: "Sensibilidad: 200"
         required: false
         default: "200"
 
@@ -32,24 +36,11 @@ jobs:
       - name: Check script & DTB exist
         shell: bash
         run: |
-          set -euo pipefail
           if [ ! -f tools/patch_og3_joypad.py ]; then
-            echo "tools/patch_og3_joypad.py not found." >&2; exit 1
+            echo "Error: tools/patch_og3_joypad.py no encontrado." >&2; exit 1
           fi
           if [ ! -f "${{ github.event.inputs.dtb_path }}" ]; then
-            echo "DTB not found: ${{ github.event.inputs.dtb_path }}" >&2
-            {
-              echo "### ❌ DTB not found"
-              echo ""
-              echo "Input: \`${{ github.event.inputs.dtb_path }}\`"
-              echo ""
-              echo "Some DTBs detected:"
-              echo ""
-              echo '```'
-              find . -type f -name "*.dtb" -printf "%P\n" | head -n 200
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 1
+            echo "Error: DTB no encontrado." >&2; exit 1
           fi
 
       - name: Install dtc
@@ -64,21 +55,19 @@ jobs:
           set -euo pipefail
           python3 tools/patch_og3_joypad.py \
             --in_dtb "${{ github.event.inputs.dtb_path }}" \
+            --node_path "${{ github.event.inputs.node_path }}" \
             --amux_csv "${{ github.event.inputs.amux_map }}" \
             --invert_csv "${{ github.event.inputs.invert_axes }}" \
             --tuning_str "${{ github.event.inputs.tuning }}"
 
-          # Keep only a single DTB, same basename as input
           in_base="$(basename "${{ github.event.inputs.dtb_path }}")"
           mv patched.dtb "${in_base}"
-
           echo "outfile=${in_base}" >> "$GITHUB_OUTPUT"
           echo "base=${in_base}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload patched DTB only
+      - name: Upload patched DTB
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.patch.outputs.base }}          # artifact name = dtb filename
-          path: ${{ steps.patch.outputs.outfile }}       # single file only
-          compression-level: 0                           # no compression (still a zip container)
+          name: ${{ steps.patch.outputs.base }}
+          path: ${{ steps.patch.outputs.outfile }}
           retention-days: 1
