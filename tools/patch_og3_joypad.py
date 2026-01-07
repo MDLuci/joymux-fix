@@ -1,8 +1,8 @@
 # tools/patch_og3_joypad.py
 # -*- coding: utf-8 -*-
 """
-Edit odroidgo3-joypad node in a DTB:
-- dtb -> dts (via dtc), locate node (default /odroidgo3-joypad)
+Edit play_joystick node in a DTB:
+- dtb -> dts (via dtc), locate node (default /play_joystick)
 - Update:
   1) amux-channel-mapping  〈property cell order is [RY, RX, LY, LX]〉
      * User supplies the *felt/observed* order for [LX,LY,RX,RY] (e.g. 'LX,LY,RY,RX') or 'unchanged'.
